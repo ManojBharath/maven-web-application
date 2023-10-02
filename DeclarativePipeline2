@@ -1,9 +1,7 @@
 pipeline {
-agent {
-  label {
-    label 'kotakbanknode'
+   agent {
+      label 'kotakbanknode'
   }
-}
     
     options {
         buildDiscarder logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '2', daysToKeepStr: '', numToKeepStr: '2')
