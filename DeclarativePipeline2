@@ -1,8 +1,8 @@
 pipeline {
-    agent {
+agent {
   label {
     label 'kotakbanknode'
-}
+  }
 }
     
     options {
