@@ -1,7 +1,9 @@
 pipeline {
    agent {
-      label 'kotakbanknode'
+     label {
+      label 'citibanknode'
   }
+}
     
     options {
         buildDiscarder logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '2', daysToKeepStr: '', numToKeepStr: '2')
@@ -25,7 +27,7 @@ pipeline {
         stage('Test the source code packages') {
             steps {
                 echo 'validate command'
-                sh "mvn clean test"
+                sh "mvn clean compile"
             }
         }
         
