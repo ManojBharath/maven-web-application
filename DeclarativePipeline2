@@ -1,0 +1,102 @@
+pipeline {
+    agent any
+    
+    options {
+        buildDiscarder logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '2', daysToKeepStr: '', numToKeepStr: '2')
+        timestamps()
+    }
+    
+    tools {
+      maven 'maven3.9.4'
+        
+    }
+
+    stages {
+        stage('Pull code form SCM') {
+            steps {
+                echo 'Git Pulling executing'
+                sendSlackNotification(String buildStatus = 'STARTED')
+                git 'https://github.com/ManojBharath/maven-web-application.git'
+            }
+        }
+        
+        stage('Test the source code packages') {
+            steps {
+                echo 'validate command'
+                sh "mvn clean test"
+            }
+        }
+        
+        stage('Prepare the SonarQube code report') {
+            steps {
+                echo 'Running SonarQube Report'
+                sh "mvn clean sonar:sonar"
+            }
+        }
+        
+        stage('Convert source code to Artifacts') {
+            steps {
+                echo 'package cmd running'
+                sh "mvn clean install"
+            }
+        }
+        
+        stage('Place the artifacts to Nexus Repo') {
+            steps {
+                echo 'generate war and pasting to Nexus repo'
+                sh "mvn clean deploy"
+            }
+        }
+        
+        stage('Move the package to Live Tomcat Server') {
+            steps {
+                echo 'moving the application to live Production environment'
+                deploy adapters: [tomcat9(credentialsId: '05aa6786-4dc2-4bd8-9d0a-b0bff3bdc987', path: '', 
+                url: 'http://65.0.178.45:8090/')], contextPath: null, war: '**/maven-web-application.*'
+            }
+        }       
+         
+    } // end of STAGES
+    
+    post {
+        success {
+            sendSlackNotification(currentBuild.result)
+        }
+       
+        failure { 
+            sendSlackNotification(currentBuild.result)
+       }
+   }
+   
+} // end of PIPELINE
+
+
+
+//========================//
+// slack code for updates
+
+def sendSlackNotification(String buildStatus = 'STARTED') {
+  // build status of null means successful
+  buildStatus =  buildStatus ?: 'SUCCESSFUL'
+
+  // Default values
+  def colorName = 'RED'
+  def colorCode = '#FF0000'
+  def subject = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
+  def summary = "${subject} (${env.BUILD_URL})"
+
+  // Override default values based on build status
+  if (buildStatus == 'STARTED') {
+    colorName = 'YELLOW'
+    colorCode = '#FFFF00'
+  } else if (buildStatus == 'SUCCESSFUL') {
+    colorName = 'GREEN'
+    colorCode = '#00FF00'
+  } else {
+    colorName = 'RED'
+    colorCode = '#FF0000'
+  }
+
+  // Send notifications
+  slackSend (color: colorCode, message: summary, channel: "#declarativeupdates")
+}
