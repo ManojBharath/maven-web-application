@@ -1,8 +1,5 @@
 node {
-     
-   // properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '3', daysToKeepStr: '', numToKeepStr: '3')), pipelineTriggers([cron('* * * * *')])]) 
-
-    def mavenHome = tool name: "maven3.9.4"
+def mavenHome = tool name: "maven3.9.4"
     try {
       sendslacknotifications("STARTED") 
     stage('Checkout Code from GitHub') {
