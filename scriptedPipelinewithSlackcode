@@ -32,6 +32,11 @@ def mavenHome = tool name: "maven3.9.4"
         
     }
 
+    stage('Store Artifacts') {
+        sh "${mavenHome}/bin/mvn clean deploy"
+        
+    }
+
     //===========================================//
    // METHOD 1 to deploy war file to tomcat  
    // stage('deploy appln to tomcat') {
