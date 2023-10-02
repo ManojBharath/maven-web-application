@@ -1,9 +1,9 @@
 pipeline {
-   agent {
-     label {
-      label 'Built-In Node'
-  }
-}
+   agent any
+    // label {
+     // label 'Built-In Node'
+  // }
+// }
     
     options {
         buildDiscarder logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '2', daysToKeepStr: '', numToKeepStr: '2')
