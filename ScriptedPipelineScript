@@ -1,4 +1,7 @@
 node {
+    triggers {
+      cron '* * * * *'
+    }
     def mavenHome = tool name: "maven3.9.4"
     
     stage('Checkout Code from GitHub') {
