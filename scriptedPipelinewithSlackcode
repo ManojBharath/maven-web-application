@@ -1,0 +1,90 @@
+node {
+     
+    properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '3', daysToKeepStr: '', numToKeepStr: '3')), pipelineTriggers([cron('* * * * *')])]) 
+
+    def mavenHome = tool name: "maven3.9.4"
+    try {
+      sendslacknotifications("STARTED") 
+    stage('Checkout Code from GitHub') {
+        git branch: 'dev', url: 'https://github.com/ManojBharath/maven-web-application.git'
+        
+    }
+   
+    stage('Compile Code') {
+        sh "${mavenHome}/bin/mvn clean compile"
+        
+    }
+
+    stage('Validate Code') {
+        sh "${mavenHome}/bin/mvn clean validate"
+        
+    }
+
+    stage('Test Code') {
+        sh "${mavenHome}/bin/mvn clean test"
+        
+    }
+    
+    stage('Run SonarQube report') {
+        sh "${mavenHome}/bin/mvn clean sonar:sonar"
+        
+    }
+
+    stage('Build WAR File') {
+        sh "${mavenHome}/bin/mvn clean package"
+        
+    }
+
+    //===========================================//
+   // METHOD 1 to deploy war file to tomcat  
+   // stage('deploy appln to tomcat') {
+   //    deploy adapters: [tomcat9(credentialsId: '05aa6786-4dc2-4bd8-9d0a-b0bff3bdc987', 
+   //    path: '', url: 'http://65.0.178.45:8090/')], contextPath: null, 
+   //    war: '**/maven-web-application.*' 
+        
+    //}
+    
+    //===========================================//
+    
+    // METHOD 2 to deploy war file to tomcat
+
+    stage('deploy appln to tomcat') { 
+        sshagent(['a7708171-a799-43c6-87b9-e29d9b11cf58']) {
+            sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@172.31.12.67:/opt/apache-tomcat-9.0.80/webapps"
+        }  
+
+   }
+} //try closing 
+catch(e) {
+currentBuild.result = "FAILURE"
+}//catch block closing
+finally {
+sendslacknotifications(currentBuild.result)
+}//finally closing
+}//EON
+ 
+def sendslacknotifications(String buildStatus = 'STARTED') {
+  // build status of null means successful
+  buildStatus =  buildStatus ?: 'SUCCESSFUL'
+
+  // Default values
+  def colorName = 'RED'
+  def colorCode = '#FF0000'
+  def subject = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
+  def summary = "${subject} (${env.BUILD_URL})"
+
+  // Override default values based on build status
+  if (buildStatus == 'STARTED') {
+    colorName = 'YELLOW'
+    colorCode = '#FFFF00'
+  } else if (buildStatus == 'SUCCESSFUL') {
+    colorName = 'GREEN'
+    colorCode = '#00FF00'
+  } else {
+    colorName = 'RED'
+    colorCode = '#FF0000'
+  }
+
+  // Send notifications
+  slackSend (color: colorCode, message: summary, channel: "#scriptedjobs")
+}
