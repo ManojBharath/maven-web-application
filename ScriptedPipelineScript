@@ -4,7 +4,7 @@ node {
 
     def mavenHome = tool name: "maven3.9.4"
     options {
-      timestamps()
+      time stamps()
     }   
     stage('Checkout Code from GitHub') {
         git branch: 'dev', url: 'https://github.com/ManojBharath/maven-web-application.git'
