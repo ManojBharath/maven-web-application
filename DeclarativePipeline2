@@ -1,7 +1,7 @@
 pipeline {
    agent {
      label {
-      label 'kotakbanknode'
+      label 'Built-In Node'
   }
 }
     
